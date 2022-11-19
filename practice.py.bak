@@ -2,7 +2,7 @@ if __name__ == "__main__":
     thickness = 5
     c = 'H'
     for i in range(thickness):
-        print(((c * i).rjust(thickness - 1) + c + (c * i).ljust(thickness - 1)))
+        print((c * i).rjust(thickness - 1) + c + (c * i).ljust(thickness - 1))
 
 class Node:
     def __init__(self, data = None, point = None):
@@ -15,8 +15,8 @@ class LinkedList:
 
 from functools import reduce
 data = (100, 10, 5, 2, 2, 2, 1, 7)
-print((reduce(lambda x, y: x - y, data)))
-print((reduce(int.__sub__, data)))
+print(reduce(lambda x, y: x - y, data))
+print(reduce(int.__sub__, data))
 
 
 

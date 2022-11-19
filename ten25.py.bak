@@ -111,7 +111,7 @@ def layer1(end):
             for c in range(end - a - b):
                 for d in range(end - a - b - c):
                     e = end - a - b - c - d
-                    print((np.array([a, b, c, d, e])))
+                    print(np.array([a, b, c, d, e]))
                     distcoll.append(np.array([a, b, c, d, e]))
     orderedcoll = stratsandavgs(np.array(distcoll))
     print("finished")
@@ -193,7 +193,7 @@ def montecarlo(size):
 
 if __name__ == '__main__':
     import numpy as np
-    print((everypossible(20)))
+    print(everypossible(20))
     import tensorflow as tf
     from random import choices
     # montecarloAssumptions = {

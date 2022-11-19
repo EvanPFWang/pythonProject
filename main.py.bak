@@ -126,7 +126,7 @@ def layer1(end):
                                     for i in range(end - a - b - c - d - e - f - g - h):
                                         counter += 1
                                         j = end - a - b - c - d - e - f - g - h - i
-                                        print((np.array([a, b, c, d, e, f, g, h, i, j])))
+                                        print(np.array([a, b, c, d, e, f, g, h, i, j]))
                                         distcoll.append(np.array([a, b, c, d, e, f, g, h, i, j]))
     for k in countup(500):
         ten_k[k] = stratsandavgs(np.array(distcoll))[k].alloc()[0]
@@ -336,10 +336,10 @@ if __name__ == '__main__':
                                     for h in range(troops - a - b - c - d - e - f - g):
                                         for i in range(troops - a - b - c - d - e - f - g - h):
                                             j = troops - a - b - c - d - e - f - g - h - i
-                                            print((np.array([a, b, c, d, e, f, g, h, i, j])))
+                                            print(np.array([a, b, c, d, e, f, g, h, i, j]))
                                             distcoll.append(np.array([a, b, c, d, e, f, g, h, i, j]))
         print("since I was not able to get my other algorithm to work, here is a consolation answer")
-        print((stratsandavgs(np.array(distcoll), montecarlotry)[0].alloc()[0]))
+        print(stratsandavgs(np.array(distcoll), montecarlotry)[0].alloc()[0])
 
     stratalloc = {
         "b123": np.array([31, 31, 31, 1, 1, 1, 1, 1, 1, 1]),
