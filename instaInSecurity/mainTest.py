@@ -8,6 +8,8 @@ logging.basicConfig(filename='insta_script_test.log', level=logging.INFO)
 # Initialize Instaloader instances
 L_main = instaloader.Instaloader()
 L_finsta = instaloader.Instaloader()
+#C:/Users/epw268/AppData/Local/miniconda3/python.exe
+# C:/Users/epw268/AppData/Local/Programs/PyCharm Professional/plugins/python-ce/helpers/packaging_tool.py install logging
 
 # Login to your main account
 main_username = 'your_main_username'
@@ -55,7 +57,12 @@ except instaloader.exceptions.InstaloaderException as e:
 
 # Find accounts you follow but don't follow you back
 non_follow_back = following_main - followers_main
+with open("output.txt", "w") as f:
+    # Write each element of the array on a new line
+    for item in non_follow_back:
+        f.write(f"{item}\n")
 
+        """
 # Filter accounts with more than 5k followers
 non_follow_back_with_5k_followers = [acc for acc in non_follow_back if acc.followers > 5000]
 if not non_follow_back_with_5k_followers:
@@ -87,3 +94,4 @@ for acc in non_follow_back_with_5k_followers:
 
 print("Finished testing follow and unfollow operations.")
 logging.info("Finished testing follow and unfollow operations.")
+"""
