@@ -1,0 +1,399 @@
+% Set # of cars
+vmax = 100;
+drsmax = 110;
+N = 20;
+crashed = [];
+r = [1000/2/pi 1000/2/pi+1 1000/2/pi+2 1000/2/pi+3 1000/2/pi+4];
+L = 2*pi*[1000/2/pi 1000/2/pi+1 1000/2/pi+2 1000/2/pi+3 1000/2/pi+4];%length of road
+crashTheta = [2 2 2 2 2]./L*2*pi;
+
+
+%Lane count keeps track of how many cars in each lane
+LaneCount = int8([0; N/2; 0; N/2; 0]);
+
+positions = [zeros(1,N/2);flip(1:N/2);zeros(1,N/2); flip(1:N/2)+N/2;zeros(1,N/2)]; 
+%xc = [theta(1:N/2)*L(2);(1:N/2)*L(4)];% start cars in fixed positions
+%xc = sort(xc);
+temp = zeros(N/2,2);
+objarray(1:N+1,1)=car(0,0,0,0,0,0);
+
+
+
+carInfo = zeros(N+1,6);
+%carInfo(N+1,:) = [N+1,6,0,vmax];
+d = zeros(N,1);
+
+dt = 1e-2;
+Tf = 25;
+stopcount = Tf/dt;
+
+vels = zeros(N,1);
+% Define dmin, dmax, vmax
+vavg=45;
+vmax=60;
+thetaMin = 5*2*pi*[((1000/2/pi))^-1 ((1000/2/pi+1))^-1 ((1000/2/pi+2))^-1 ((1000/2/pi+3))^-1 ((1000/2/pi+4))^-1];
+thetaMax = pi/8;
+places=int8(zeros(5,N/2));
+places(2,:) = (1:N/2);
+places(4,:) = (N/2+1:N);
+for carsI = 0:(N/2-1)
+%     refI1=refI1(:);
+%     refI1=cat(refI1,zeros(1,2*carsI))';
+%
+%No cars
+%Car 10 at the front ... Car 1 at the back
+%No cars
+%Car 20 at the front ... Car 11 at the back
+%No cars
+    if (carsI>0)
+        refI1 = [zeros(1,N/2);cat(2,flip(1+carsI:N/2),zeros(1,carsI)); zeros(1,N/2);cat(2,flip(1+carsI:N/2)+N/2,zeros(1,carsI));zeros(1,N/2)];
+        refI2 = [zeros(1,N/2);cat(2,flip(1+carsI:N/2),zeros(1,carsI)); zeros(1,N/2);cat(2,flip(1+carsI:N/2)+N/2,zeros(1,carsI));zeros(1,N/2)];
+    else
+        refI1 = [zeros(1,N/2);flip(1:N/2-carsI);zeros(1,N/2); flip(1:N/2-carsI)+N/2;zeros(1,N/2)];
+        refI2 = [zeros(1,N/2);flip(1:N/2-carsI);zeros(1,N/2); flip(1:N/2-carsI)+N/2;zeros(1,N/2)];
+    end
+        if (carsI==N/2-1)
+            objarray(carsI+1) = car(N/2-carsI, 2, carsI*2*pi/(32/N)/(N^2), vavg,N, 0);%starts at theta 0
+            objarray(carsI+N/2+1) = car(N-carsI, 4, carsI*2*pi/(32/N)/(N^2), vavg,N, 0);
+        else
+            objarray(carsI+1) = car(N/2-carsI, 2, carsI*2*pi/(32/N)/(N^2), vavg,N, N/2-carsI-1);
+            objarray(carsI+N/2+1) = car(N-carsI, 4, carsI*2*pi/(32/N)/(N^2), vavg,N, N-carsI-1);
+        end
+        [a,b,c,d]=objarray(carsI+1).info();
+        [w,x,y,z]= objarray(carsI+N/2+1).info();
+
+        carInfo(carsI+1,1:4) = [a,b,c,d,0,0];
+        carInfo(carsI+1+N/2,1:4) = [w,x,y,z,0,0];
+        %carInfo
+
+end
+    %status:
+    %1 if swaps lanes
+    %-1 if dead
+    %0 if no swap
+    
+    
+    %carInfo:
+    %[id    lane    theta   vel decision    status
+    % ...
+    % id    lane    theta   vel decision    status
+    % ...
+    % id    lane    theta   vel decision    status]
+    
+    decisions = zeros(N,5);
+    %decisions ...
+    %[nextCarPreDrive   nextCarPostDrive    newv    objl    decision
+    %...
+    % nextCarPreDrive   nextCarPostDrive    newv    objl    decision
+    %...
+    % nextCarPreDrive   nextCarPostDrive    newv    objl    decision]
+    
+    Execution = zeros(N,2);
+    %Execution ...
+    %[nextCarPreDrive   nextCarPostDrive   
+    %...
+    % nextCarPreDrive   nextCarPostDrive 
+    %...
+    % nextCarPreDrive   nextCarPostDrive ]
+    
+    Checks = zeros(N,2);
+    
+    
+    decisions(:,1:4)= carInfo;
+    execution()
+    
+for iT=1:stopcount
+    % Calculate velocity of each car (fill in the array vels)
+    for thisCar=1:N
+        %carInfoTStep = carInfo;
+        if(decisions(thisCar, 1:6)~=-1)
+            objarray(thisCar).execute1(carInfo,places);
+            %[nextCarPreDrive, nextCarPostDrive, newv,objl, newl] ...
+            %execute1(obj, carInfo, places)
+            decisions(thisCar, 1:5)= objarray(thisCar).execute1(carInfo,places);
+            %[nextCarPreDrive,nextCarPostDrive, newv, objl, decision]
+        end
+    end
+    
+    for thisCar=1:N
+        %function [nextCarPreDrive, nextCarPostDrive, changes]  = execute2(obj,id, carInfo, execute1, laneCount)
+        if(carInfo(thisCar, 1:6)~=-1)
+            [nextCarPreDrive, nextCarPostDrive, changes, newlCount] = objarray(thisCar).execute2(thisCar, carInfo,decisions(thisCar, 1:5),LaneCount);
+            postExecution{thisCar,1} = nextCarPreDrive;
+            postExecution{thisCar,2} = nextCarPostDrive;
+            LaneCount = newlCount;
+            carInfo = changes;
+        end
+    end
+
+                
+
+    
+    for thisCar=1:N
+        if(carInfo(thisCar, 1:6)~=-1)
+            orderPOSTEX
+        end
+    end
+end
+
+
+
+        %EX3 checks status for each car
+        if (isvalid(objarray(thisCar,1))==0)
+            carInfo(thisCar,:) = [0 0 0 0];
+            for x=1:5
+                for y=1:N/2
+                    empty = 0;
+                    if (places(x,y) == 0)
+                        empty = empty+1;
+                        if (empty == 3)
+                            continue;
+                        end
+                    elseif(places(x,y) == thisCar)
+                        places(x,y) = 0;
+                    end
+                end
+            end
+        end
+            sz=size(places);
+            
+            
+            
+       
+            
+            tpl = linspace(0,2*pi,1000);
+            hold on
+            plot(r(1)*cos(tpl),r(1)*sin(tpl))
+            plot(r(2)*cos(tpl),r(2)*sin(tpl))
+            plot(r(3)*cos(tpl),r(3)*sin(tpl))
+            plot(r(4)*cos(tpl),r(4)*sin(tpl))
+            plot(r(5)*cos(tpl),r(5)*sin(tpl))  
+            %drawnow
+
+            %hold off
+            %if(mod(iT,10) == 0)
+            %    hold on
+            %    objarray(thisCar,1).plotME()
+            %end
+            
+            carInfo(thisCar,:) = changes;
+            if(crash1==crash2)
+                continue;
+            else
+                delete(objarray(crash1));
+                delete(objarray(crash2));
+                for x=1:5
+                    for y=1:N/2
+                        empty = 0;
+                        if (places(x,y) == 0)
+                            empty = empty+1;
+                            if (empty == 3)
+                                continue;
+                            end
+                        elseif(places(x,y) == crash1)
+                            places(x,y) = 0;
+                        end
+                    end
+                end
+                for x=1:5
+                    for y=1:N/2
+                        empty = 0;
+                        if (places(x,y) == 0)
+                            empty = empty+1;
+                            if (empty == 3)
+                                continue;
+                            end
+                        elseif(places(x,y) == crash2)
+                            places(x,y) = 0;
+                        end
+                    end
+                end
+            end
+            places = order(places, carInfo,places);
+    end
+        
+    % Update the car positions
+    % Plot them in circle
+    
+    
+    
+    
+    
+%    plot(cos(tpl),sin(tpl))
+    
+    
+end
+%index=N-id+1+N/2*(id>N/2);
+%id=N/2*(index>N/2+1)+mod(N-index,N/2)+1
+
+
+%function thetaDist = theta2nDispMat(objTheta,Matrix)
+%    thetaDist = (Matrix - 2*pi*(Matrix>pi)) - (objTheta-2*pi*(objTheta>pi))*ones(size(Matrix));
+%end
+
+
+function [ordered,coords] = orderPREX(carInfo,places)
+%Once something  has been swapped or deleted, convert it to N+1 for this to
+%work
+    sz=size(places);%matrix
+    newOrder = places;
+    coords = zeros(sz{1},2);
+
+    for i=1:sz(1)
+        if (~logical(places{i,1}+places{i,2}+places{i,3}+places{i,4} + places{i,5}))
+            continue;
+        end
+        newOrder(i,:)=quicksort1(newOrder(i,:),carInfo,0);
+        for j=1:sz(2)
+            if (places{i,j}~=0)
+                coords{places{i,j},1} = i;
+                coords{places{i,j},2} = j;
+            end
+        end
+    end
+    
+    ordered = newOrder;
+
+end
+
+function [ordered] = orderPOSTEX(carInfo,places)
+%Once something  has been swapped or deleted, convert it to N+1 for this to
+%work
+    sz=size(places);%matrix
+    newOrder = places;
+    for i=1:sz(1)
+        if (~logical(places{i,1}+places{i,2}+places{i,3}+places{i,4} + places{i,5}))
+            continue;
+        end
+        newOrder(i,:)=quicksort1(newOrder(i,:),carInfo,0);
+    end
+    ordered = newOrder;
+
+end
+
+
+    function [vector] = quicksort2(vector,carInfo)
+    %quicksort Sort row  vector in ASCending order using a variant of Quicksort
+    % Original work: C. A. R. Hoare: Quicksort. In: The Computer Journal. 5(1), 1962, p. 10-15.
+    % This implementation works in place. There are no practical advantages over the build-in sort function.
+    % Author: Christian Werner, Ostfalia University of Applied Sciences
+    % Date: 2018-03-31 (updated: 2020-12-21)
+
+        if numel(vector) > 1 % vectors with one or less elements are sorted
+
+            
+                              vectorsz = size(vector);
+                              y = 1;
+%                              tic
+                              ab = zeros(1, vectorsz(2));
+                                for x = 1:vectorsz(2)
+                                    if(vector(x) ~= 0)
+                                        ab(y) = vector(x);
+                                        y=y+1;
+                                    end
+                                end
+                                vector = ab(1:y-1);
+                                if(vector(1)~=0)
+                                    pivot= vector(idivide(numel(vector),cast(2,"uint8"),'ceil'));  % taking middle value as pivot element
+                                    %coordinates{vector} = [0,0]
+                                end
+                              % runtime
+%                                toc
+                              %a = vector(carInfo(vector,3) < carInfo(pivot,3))
+                              %b = vector(carInfo(vector,3) == carInfo(pivot,3))
+                              %c = vector(carInfo(vector,3) > carInfo(pivot,3))
+            vector = [quicksort(vector(carInfo(vector,3) < carInfo(pivot,3)),carInfo), vector(carInfo(vector,3) == carInfo(pivot,3)),quicksort(vector(carInfo(vector,3) > carInfo(pivot,3)),carInfo, objTheta)];
+            %(vector)
+        else
+            return
+        end
+    end   
+    
+    
+function thetaDist = theta2nDisp(objTheta,nexTheta)
+thetaDist = (nexTheta-2*pi*(nexTheta>pi))-(objTheta-2*pi*(objTheta>pi));
+end
+function thetaDist = theta2nDispMat(objTheta,Matrix)
+    thetaDist = (Matrix - 2*pi*(Matrix>pi)) -(objTheta-2*pi*(objTheta>pi))*ones(size(Matrix));
+end
+
+
+
+function [vector] = quicksort2(vector,carInfo, objTheta)
+%quicksort Sort row  vector in ASCending order using a variant of Quicksort
+% Original work: C. A. R. Hoare: Quicksort. In: The Computer Journal. 5(1), 1962, p. 10-15.
+% This implementation works in place. There are no practical advantages over the build-in sort function.
+% Author: Christian Werner, Ostfalia University of Applied Sciences
+% Date: 2018-03-31 (updated: 2020-12-21)
+
+    if numel(vector) > 1 % vectors with one or less elements are sorted
+
+
+                          vectorsz = size(vector);
+                          y = 1;
+%                              tic
+                          ab = zeros(1, vectorsz(2));
+                            for x = 1:vectorsz(2)
+                                if(vector(x) ~= 0)
+                                    ab(y) = vector(x);
+                                    y=y+1;
+                                end
+                            end
+                            vector = ab(1:y-1);
+                            delete(ab);
+                            if(vector(1)~=0)
+                                pivot= vector(idivide(numel(vector),cast(2,"uint8"),'ceil'));  % taking middle value as pivot element
+                            end
+                          % randomization helps avoid worst case
+                          % runtime
+%                                toc
+                          %a = vector(theta2nDisp(objTheta, vector) > theta2nDisp(objTheta, carInfo(pivot,3)))%,carInfo, objTheta)
+                          %b = vector(theta2nDisp(objTheta, vector) == theta2nDisp(objTheta, carInfo(pivot,3)))
+                          %disp(b)
+                          %c = vector(theta2nDisp(objTheta, vector) > theta2nDisp(objTheta, carInfo(pivot,3)))
+        vector = [quicksort1(vector(theta2nDisp(objTheta, carInfo(vector,3)) < theta2nDisp(objTheta, carInfo(pivot,3))),carInfo, objTheta), vector(theta2nDisp(objTheta, carInfo(vector,3)) == theta2nDisp(objTheta, carInfo(pivot,3))),quicksort1(vector(theta2nDisp(objTheta, carInfo(vector,3)) > theta2nDisp(objTheta, carInfo(pivot,3))),carInfo, objTheta)];
+
+    else
+        return
+    end
+end   
+
+function [vector] = quicksort1(vector,carInfo, objTheta)
+%quicksort Sort row  vector in DESCending order using a variant of Quicksort
+% Original work: C. A. R. Hoare: Quicksort. In: The Computer Journal. 5(1), 1962, p. 10-15.
+% This implementation works in place. There are no practical advantages over the build-in sort function.
+% Author: Christian Werner, Ostfalia University of Applied Sciences
+% Date: 2018-03-31 (updated: 2020-12-21)
+
+    if numel(vector) > 1 % vectors with one or less elements are sorted
+
+
+                          vectorsz = size(vector);
+                          y = 1;
+%                              tic
+                          ab = zeros(1, vectorsz(2));
+                            for x = 1:vectorsz(2)
+                                if(vector(x) ~= 0)
+                                    ab(y) = vector(x);
+                                    y=y+1;
+                                end
+                            end
+                            vector = ab(1:y-1);
+                            delete(ab);
+                            if(vector(1)~=0)
+                                pivot= vector(idivide(numel(vector),cast(2,"uint8"),'ceil'));  % taking middle value as pivot element
+                            end
+                          % randomization helps avoid worst case
+                          % runtime
+%                                toc
+                          %a = vector(theta2nDisp(objTheta, vector) > theta2nDisp(objTheta, carInfo(pivot,3)))%,carInfo, objTheta)
+                          %b = vector(theta2nDisp(objTheta, vector) == theta2nDisp(objTheta, carInfo(pivot,3)))
+                          %disp(b)
+                          %c = vector(theta2nDisp(objTheta, vector) > theta2nDisp(objTheta, carInfo(pivot,3)))
+        vector = [quicksort2(vector(theta2nDisp(objTheta, carInfo(vector,3)) > theta2nDisp(objTheta, carInfo(pivot,3))),carInfo, objTheta), vector(theta2nDisp(objTheta, carInfo(vector,3)) == theta2nDisp(objTheta, carInfo(pivot,3))),quicksort2(vector(theta2nDisp(objTheta, carInfo(vector,3)) < theta2nDisp(objTheta, carInfo(pivot,3))),carInfo, objTheta)];
+
+    else
+        return
+    end
+end
+

@@ -1,0 +1,997 @@
+
+function [fr,ba] = peek2(carInfo,places, which, objTheta, Lane_Count)
+
+    if which <3
+        if which == 1
+                    %front reference
+                %closest front -> farthest front in reference
+                frl1 = zeros(1,objN/2);
+                frl2 = zeros(1,objN/2);
+                frl3 = zeros(1,objN/2);
+                frl4 = zeros(1,objN/2);
+                frl5 = zeros(1,objN/2);
+
+                frl1nonZero = 0;
+                frl2nonZero = 0;
+                frl3nonZero = 0;
+                frl4nonZero = 0;
+                frl5nonZero = 0;
+                for i = 1:sz(1)
+                    if (places(i,1)==places(i,2)&&places(i,2)==places(i,3)&&places(i,3)==places(i,4)&&places(i,4)==places(i,5)&&places(i,5)==0)
+                        continue;
+                    end
+                    rowIndexer = 1;
+                    for j = 1:sz(2)
+                        stored = places(i,j);                  
+
+                        if(stored==0||carInfo(stored,2)==0)
+                            continue;
+                        end
+                        thetaThis=carInfo(places(i,j),3);
+
+                        if(theta2nDisp(objTheta,thetaThis)< pi/16 && theta2nDisp(objTheta,thetaThis)>0)
+                            switch i
+                                case 1
+                                    frl1(1,rowIndexer)=places(i,j);
+                                    frl1nonZero = frl1nonZero+1;
+                                case 2
+                                    frl2(1,rowIndexer)=places(i,j);
+                                    frl2nonZero = frl2nonZero+1;
+                                case 3
+                                    frl3(1,rowIndexer)=places(i,j);
+                                    frl3nonZero = frl3nonZero+1;
+                                case 4
+                                    frl4(1,rowIndexer)=places(i,j);
+                                    frl4nonZero = frl4nonZero+1;
+                                case 5
+                                    frl5(1,rowIndexer)=places(i,j);
+                                    frl5nonZero = frl5nonZero+1;
+                            end
+                            rowIndexer = rowIndexer + 1;
+                        end
+
+                    end
+                    switch i
+                        case 1
+                            if (frl1nonZero == 0)
+                                frl1=zeros(1,objN/2);
+                            else
+                                frl1=frl1(1:frl1nonZero);
+                                frl1=cat(2,quicksort1(frl1, carInfo,objTheta),zeros([1,objN/2-frl1nonZero]));
+                            end
+                        case 2
+                            if (frl2nonZero == 0)
+                                frl2=zeros(1,objN/2);
+                            else
+
+                                frl2=frl2(1:frl2nonZero);
+                                frl2=cat(2,quicksort1(frl2,carInfo,objTheta),zeros(1,objN/2-frl2nonZero));
+                            end
+                        case 3
+                            if (frl3nonZero == 0)
+                                frl3=zeros(1,objN/2);
+                            else
+
+                                frl3=frl3(1:frl3nonZero);
+                                frl3=cat(2,quicksort1(frl3,carInfo,objTheta),zeros(1,objN/2-frl3nonZero));
+                            end
+                        case 4
+                            if (frl4nonZero == 0)
+                                frl4=zeros(1,objN/2);
+                            else
+
+                                frl4=frl4(1:frl4nonZero);
+                                %x = zeros(1,objN/2-frl4nonZero)
+                                %y = objN/2-frl4nonZero
+                                %disp(y)
+                                %disp(x)
+                                disp(frl4nonZero)
+                                frl4=cat(2,quicksort1(frl4,carInfo,objTheta),zeros([1,objN/2-frl4nonZero]));
+                            end
+                        case 5
+                            if (frl5nonZero == 0)
+                                frl5=zeros(1,objN/2);
+                            else
+                                frl5=frl5(1:frl5nonZero);
+                                frl5=cat(2,quicksort1(frl5,carInfo,objTheta),zeros(1,objN/2-frl5nonZero));
+
+                            end
+                    end
+                end
+                fr=cat(1,frl1,frl2,frl3,frl4,frl5);
+                ba = zeros(5,objN/2);
+            else
+                %back reference
+                %closest front -> farthest front in reference
+                bal1 = zeros(1,objN/2);
+                bal2 = zeros(1,objN/2);
+                bal3 = zeros(1,objN/2);
+                bal4 = zeros(1,objN/2);
+                bal5 = zeros(1,objN/2);
+
+                bal1nonZero = 0;
+                bal2nonZero = 0;
+                bal3nonZero = 0;
+                bal4nonZero = 0;
+                bal5nonZero = 0;
+
+                for i = 1:sz(1)
+                    if (places(i,1)==places(i,2)&&places(i,2)==places(i,3)&&places(i,3)==places(i,4)&&places(i,4)==places(i,5)&&places(i,5)==0)
+                        continue;
+                    end
+                    rowIndexer = 1;
+                    for j = 1:sz(2)
+                        stored = places(i,j);                  
+
+                        if(stored==0||carInfo(stored,2)==0)
+                            continue;
+                        end
+                        thetaThis=carInfo(places(i,j),3);
+
+                        if((theta2nDisp(objTheta,thetaThis)>-pi/16)&&(theta2nDisp(objTheta,thetaThis)<0))
+                            switch i
+                                case 1
+                                    bal1(1,rowIndexer)=places(i,j);
+                                    bal1nonZero = bal1nonZero+1;
+                                case 2
+                                    bal2(2,rowIndexer)=places(i,j);
+                                    bal2nonZero = bal2nonZero+1;
+                                case 3
+                                    bal3(3,rowIndexer)=places(i,j);
+                                    bal3nonZero = bal3nonZero+1;
+                                case 4
+                                    bal4(4,rowIndexer)=places(i,j);
+                                    bal4nonZero = bal4nonZero+1;
+                                case 5
+                                    bal5(5,rowIndexer)=places(i,j);
+                                    bal5nonZero = bal5nonZero+1;
+                            end
+                            rowIndexer = rowIndexer + 1;
+
+                        end
+
+                    end
+                    switch i
+                        case 1
+                            if (bal1nonZero == 0)
+                                bal1=zeros(1,objN/2);
+                            else
+                                bal1=wrev(bal1(1:bal1nonZero));
+                                bal1=cat(2,quicksort1(bal1, objTheta),zeros(1:objN/2-bal1nonZero));
+                            end
+                        case 2
+                            if (bal2nonZero == 0)
+                                bal2=zeros(1,objN/2);
+                            else
+
+                                bal2=wrev(bal2(1:bal2nonZero));
+                                bal2=cat(2,quicksort1(bal2,objTheta),zeros(1:objN/2-bal2nonZero));
+                            end
+                        case 3
+                            if (bal3nonZero == 0)
+                                bal3=zeros(1,objN/2);
+                            else
+
+                                bal3=wrev(bal3(1:bal3nonZero));
+                                bal3=cat(2,quicksort1(bal3,objTheta),zeros(1:objN/2-bal3nonZero));
+                            end
+                        case 4
+                            if (bal4nonZero == 0)
+                                bal4=zeros(1,objN/2);
+                            else
+
+                                bal4=wrev(bal4(1:bal4nonZero));
+                                bal4=cat(2,quicksort1(bal4,objTheta),zeros(1:objN/2-bal4nonZero));
+                            end
+                        case 5
+                            if (bal5nonZero == 0)
+                                bal5=zeros(1,objN/2);
+                            else
+                                bal5=wrev(bal5(1:bal5nonZero));
+                                bal5=cat(2,quicksort1(bal5,objTheta),zeros(1:objN/2-bal5nonZero));
+                            end
+                    end
+                end
+                ba=cat(1,bal1,bal2,bal3,bal4,bal5);
+                fr = zeros(5,objN/2);
+        end                
+    else
+        if which > 5
+            if which == 6
+                fr = zeros(sz);
+                ba = zeros(sz);
+                Indexerfr = [1;1;1;1;1];
+                Indexerba = [1;1;1;1;1];
+                carSeenfr = [0;0;0;0;0];
+                carSeenba = [0;0;0;0;0];
+
+                for j = 1:objN
+                    if(carInfo(j,2)==0)
+                        continue;
+                    end
+                    thetaThis=carInfo(j,3);
+                    laneThis=carInfo(j,2);
+                    if(abs(theta2nDisp(objTheta,thetaThis))< theta_view)
+                        if(theta2nDisp(objTheta,thetaThis)>0)
+                            carSeenfr{laneThis} = carSeenfr{laneThis} + 1;
+                            fr{laneThis,Indexerfr{laneThis}}= carInfo{j,1};
+                            Indexerfr{laneThis} = Indexerfr{laneThis}+1;
+                        else
+                            carSeenba{laneThis} = carSeenfr{laneThis} + 1;
+                            ba{laneThis,Indexerba{laneThis}}= carInfo{j,1};
+                            Indexerba{laneThis} = Indexerba{laneThis}+1;
+                        end
+                    end
+                end
+                for i = 1:sz{1}
+                    if (carSeenfr{i} == 0)
+                        continue;
+                    else
+                        sorThis = fr(i,1:1+carSeenfr{i});
+                        sorThis = quicksort2(sorThis, carInfo,objTheta);
+                        fr(i,:)=sorThis;
+                    end
+                    if (carSeenba{i} == 0)
+                        continue;
+                    else
+                        sorThis = fr(i,1:1+carSeenba{i});
+                        sorThis = quicksort1(sorThis, carInfo,objTheta);
+                        fr(i,:)=sorThis;
+                    end
+                end
+            else
+                if mod(which,2) == 0 %which == 8
+                    fr = zeros(sz);
+                    ba = zeros(sz);
+                    Indexer = [1;1;1;1;1];
+                    carSeen = [0;0;0;0;0];
+
+                    for j = 1:objN
+
+                        if(carInfo(j,2)==0)
+                            continue;
+                        end
+
+                        thetaThis=carInfo(j,3);
+                        laneThis=carInfo(j,2);
+
+                        if(theta2nDisp(objTheta,thetaThis)< theta_view && theta2nDisp(objTheta,thetaThis)>0)
+                                carSeen{laneThis} = carSeen{laneThis} + 1;
+                                fr{laneThis,Indexer{laneThis}}= carInfo{j,1};
+                                Indexer{laneThis} = Indexer{laneThis}+1;
+                        end
+                    end
+                    for i = 1:sz{1}
+                        if (carSeen{i} == 0)
+                            continue;
+                        else
+                            sorThis = fr(i,1:1+carSeen{i});
+                            sorThis = quicksort2(sorThis, carInfo,objTheta);
+                            fr(i,:)=sorThis;
+                        end
+                    end
+                else%which == 7
+                    fr = zeros(sz);
+                    ba = zeros(sz);
+                    Indexer = [1;1;1;1;1];
+                    carSeen = [0;0;0;0;0];
+                    for j = 1:objN
+
+                        if(carInfo(j,2)==0)
+                            continue;
+                        end
+
+                        thetaThis=carInfo(j,3);
+                        laneThis=carInfo(j,2);
+
+                        if(theta2nDisp(objTheta,thetaThis)> -1*theta_view && theta2nDisp(objTheta,thetaThis)<0)
+                                carSeen{laneThis} = carSeen{laneThis} + 1;
+                                ba{laneThis,Indexer{laneThis}}= carInfo{j,1};
+                                Indexer{laneThis} = Indexer{laneThis}+1;
+                        end
+                    end
+                    for i = 1:sz{1}
+                        if (carSeen{i} == 0)
+                            continue;
+                        else
+                            sorThis = ba(i,1:1+carSeen{i});
+                            sorThis = quicksort1(sorThis, carInfo,objTheta);
+                            ba(i,:)=sorThis;
+                        end
+                    end
+                end
+            end
+
+
+
+
+        else
+            if which == 5
+                fr = zeros(5,objN/2);
+                        ba = zeros(5,objN/2);
+
+                        %id = places{coords};
+                        %front reference
+                        %closest front -> farthest front in reference
+
+                        theta_from_pi = theta2nDisp(objTheta,pi);
+                        if (abs(theta_from_pi)>theta_view || theta_from_pi<0)
+                            for i = 1:sz(1)
+                                %is row empty
+                                if (places(i,1)==places(i,2)&&places(i,2)==places(i,3)&&places(i,3)==places(i,4)&&places(i,4)==places(i,5)&&places(i,5)==0)
+                                    continue;
+                                end
+
+                                %find how many cars are seen 
+                                int8 rowIndexer1;
+                                int8 rowIndexer2;
+
+                                logical front_seen;
+                                front_seen = 0;                   
+
+                                %this is for finding the ones in front
+                                for rowIndexer1 = 1:Lane_Count{i}
+
+                                    thetaThis = carInfo{places{i,rowIndexer1},3};
+                                    distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                    if (abs(distance_in_front)<theta_view)
+                                        if(distance_in_front>0)
+                                            front_seen = 1;
+
+
+                                            %for finding the one that is not in front
+                                            for rowIndexer2 = rowIndexer1+1:Lane_Count{i}
+                                                thetaThis = carInfo{places{i,rowIndexer1},3};
+                                                distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                                if (~(distance_in_front > 0));break;end
+                                                %if front_seen = 0 then ~(distance_in_front < 0)
+                                            end
+                                            break;     
+                                        end
+                                    end
+                                    if (front_seen == 1)
+                                        rowIndexer2 = rowIndexer2-1;
+                                            if (front_seen ~= 0)
+                                                piece1 = places(i,rowIndexer1:rowIndexer2);
+                                                fr(i,1:rowIndexer2-rowIndexer1) = flip(piece1,2);
+                                            end
+                                    end
+                                end
+                            end
+                        else%(theta_from_pi>0)%how far is pi in front of objtheta - case 2
+                            for i = 1:sz(1)
+                                %is row empty
+                                if (places(i,1)==places(i,2)&&places(i,2)==places(i,3)&&places(i,3)==places(i,4)&&places(i,4)==places(i,5)&&places(i,5)==0)
+                                    continue;
+                                end
+
+                                %find how many cars are seen 
+                                int8 rowIndexer1;
+                                int8 rowIndexer2;
+
+
+                                int8 rowIndexer5;
+                                int8 crit_Index; %in the critical case where
+                                %case 1: car "peeking" is within 0+-theta_view then there
+                                %is a possibility where it can see cars at the
+                                %front of the track's placing as being behind it(if the "peeking car" theta is
+                                %less than (theta_view-pi)
+                                %case 2: see cars at the back of the track's placing as
+                                %being in front of it(if the "peeking car" theta is
+                                %greater than (pi - theta_view)
+
+                                crit_Index = Lane_Count{i};
+                                %crit_Index: index of car that cannot be seen.
+                                %In this context, rowIndexer5 searches for a car that is behind
+                                %objTheta at the front of the places.
+                                imp_object_in_back = theta2nDisp(objTheta,carInfo{places{i,crit_Index},3});
+                                if (abs(imp_object_in_back)<theta_view)
+                                    for rowIndexer5 = 1:Lane_Count{i}
+                                        thetaThis = carInfo{places{i,rowIndexer5},3};
+                                        distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                        if(distance_in_front>theta_view) 
+                                            crit_Index = rowIndexer5;
+                                            break;
+                                        end
+                                    end
+                                end
+
+                                logical front_seen;
+                                front_seen = 0;
+
+
+
+                                %this is for finding the ones in front
+                                for rowIndexer1 = 1:crit_Index
+
+                                    thetaThis = carInfo{places{i,rowIndexer1},3};
+                                    distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                    if (abs(distance_in_front)<theta_view)
+                                            if(distance_in_front>0)
+                                                front_seen = 1;
+
+                                                %for finding the one that is not in front
+                                                for rowIndexer2 = rowIndexer1+1:crit_Index
+                                                    thetaThis = carInfo{places{i,rowIndexer2},3};
+                                                    distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                                    if (~(distance_in_front > 0));break;end
+                                                    %if front_seen = 0 then ~(distance_in_front < 0)
+                                                end
+                                                break;
+
+                                            end
+                                    end
+                                end
+
+                                rowIndexer2 = rowIndexer2-1;
+                                rowIndexer5 = rowIndexer5+1;
+
+                                if (front_seen == 1) 
+                                    front = places(i,rowIndexer1:rowIndexer2);
+
+                                    if (crit_Index ~= Lane_Count{i})
+                                        crit_space = Lane_Count{i}-crit_Index;
+                                        fr(i,1:crit_space)= places(i,rowIndexer5:Lane_Count{i});
+                                        fr(i,crit_space+1:rowIndexer2-rowIndexer1+1+crit_space) = flip(front,2);
+                                    else
+                                        fr(i,1:rowIndexer2-rowIndexer1+1) = flip(front,2);
+                                    end
+                                else
+                                    if(crit_Index ~= Lane_Count{i})
+                                        crit_space = Lane_Count{i}-crit_Index;
+                                        fr(i,1:crit_space)= places(i,rowIndexer5:Lane_Count{i});
+                                    end
+                                end
+                            end
+                        end
+            else
+                if mod(which,2)==0 % which == 4
+                    fr = zeros(5,objN/2);
+                    ba = zeros(5,objN/2);
+
+                    %id = places{coords};
+                    %front reference
+                    %closest front -> farthest front in reference
+
+                    theta_from_pi = theta2nDisp(objTheta,pi);
+                    if (abs(theta2nDisp(objTheta,pi))>theta_view)
+                        for i = 1:sz(1)
+                            %is row empty
+                            if (places(i,1)==places(i,2)&&places(i,2)==places(i,3)&&places(i,3)==places(i,4)&&places(i,4)==places(i,5)&&places(i,5)==0)
+                                continue;
+                            end
+
+                            %find how many cars are seen 
+                            int8 rowIndexer1;
+                            int8 rowIndexer2;
+
+
+                            logical back_seen;
+                            back_seen = 0;
+
+                            %this is for finding the ones in front
+                            for rowIndexer1 = 1:Lane_Count{i}
+
+                                thetaThis = carInfo{places{i,rowIndexer1},3};
+                                distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                if (distance_in_front>-1*theta_view)
+                                    if(distance_in_front<0)
+                                        back_seen = 1;
+
+                                        for rowIndexer2 = rowIndexer1+1:Lane_Count{i}
+                                            thetaThis = carInfo{places{i,rowIndexer2},3};
+                                            distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                            if (~(distance_in_front < 0));break;end
+                                        end
+                                        break;
+                                    end
+                                end
+                            end
+
+                            if (back_seen == 1)
+                                     %this is for finding the other set that is the
+                                     %opposite of the ones previously found(if the
+                                     %rowIndexers 1 and 2 are used to find cars in
+                                     %front, then this is to find cars behind, vice
+                                     %versa)
+
+
+                                rowIndexer2 = rowIndexer2-1;
+
+
+
+
+                                ba(i,1:rowIndexer2-rowIndexer1) = places(i,rowIndexer1:rowIndexer2);
+
+                            end
+                        end
+                    else
+                            for i = 1:sz(1)
+                                %is row empty
+                                if (places(i,1)==places(i,2)&&places(i,2)==places(i,3)&&places(i,3)==places(i,4)&&places(i,4)==places(i,5)&&places(i,5)==0)
+                                    continue;
+                                end
+
+                                %find how many cars are seen 
+                                int8 rowIndexer1;
+                                int8 rowIndexer2;
+
+
+                                int8 rowIndexer5;
+                                int8 crit_Index; %in the critical case where
+                                %case 1: car "peeking" is within 0+-theta_view then there
+                                %is a possibility where it can see cars at the
+                                %front of the track's placing as being behind it(if the "peeking car" theta is
+                                %less than (theta_view-pi)
+                                %case 2: see cars at the back of the track's placing as
+                                %being in front of it(if the "peeking car" theta is
+                                %greater than (pi - theta_view)
+
+                                if (theta_from_pi<0)%how far is pi in front of objtheta - case 1
+                                    crit_Index = 1;
+                                    imp_object_in_front = theta2nDisp(objTheta,carInfo{places{i,crit_Index},3});
+                                    if (abs(imp_object_in_front)<theta_view)
+                                        for rowIndexer5 = 1:Lane_Count{i}
+                                            thetaThis = carInfo{places{i,rowIndexer5},3};
+                                            distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                            if(distance_in_front< -1*theta_view) 
+                                                crit_Index = rowIndexer5;
+                                                break;
+                                            end
+                                        end
+                                    end
+
+
+
+
+                                    logical back_seen;
+                                    back_seen = 0;
+
+
+                                    %this is for finding the ones in front
+                                    %
+                                    for rowIndexer1 = crit_Index:Lane_Count{i}
+
+                                        thetaThis = carInfo{places{i,rowIndexer1},3};
+                                        distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                        if (abs(distance_in_front)<theta_view)
+                                            if(distance_in_front<0)
+                                                front_seen = 0;
+                                                back_seen = 1;
+
+                                                for rowIndexer2 = rowIndexer1+1:Lane_Count{i}
+                                                    thetaThis = carInfo{places{i,rowIndexer1},3};
+                                                    distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                                    if (~(distance_in_front < 0));break;end
+                                                    %if front_seen = 0 then ~(distance_in_front < 0)
+                                                end
+                                                break;
+                                            end
+                                        end
+                                    end
+
+                                    if (back_seen == 1)
+                                             %this is for finding the ones behind
+
+                                        rowIndexer2 = rowIndexer2-1;
+                                        rowIndexer5 = rowIndexer5-1;
+
+
+                                        back = places(i,rowIndexer1:rowIndexer2);
+
+                                        if (crit_Index ~= 1)
+                                            ba(i,1:rowIndexer2-rowIndexer1+1) = back;
+                                            ba(i,1+(rowIndexer2-rowIndexer1+1):rowIndexer5+(rowIndexer2-rowIndexer1+1)) =  ...
+                                                places(i,1:rowIndexer5);
+                                        else
+                                            ba(i,1:rowIndexer2-rowIndexer1+1) = back;
+                                        end
+                                    else
+                                        if (crit_Index ~= 1)
+                                            ba(i,1:rowIndexer5) = places(i,1:rowIndexer5);
+                                        end
+                                    end
+                                end
+                            end              
+                    end
+
+                else %which == 3
+                    fr = zeros(5,objN/2);
+                    ba = zeros(5,objN/2);
+
+                    %id = places{coords};
+                    %front reference
+                    %closest front -> farthest front in reference
+
+                    theta_from_pi = theta2nDisp(objTheta,pi);
+                    if (abs(theta2nDisp(objTheta,pi))>theta_view)
+                        for i = 1:sz(1)
+                            %is row empty
+                            if (places(i,1)==places(i,2)&&places(i,2)==places(i,3)&&places(i,3)==places(i,4)&&places(i,4)==places(i,5)&&places(i,5)==0)
+                                continue;
+                            end
+
+                            %find how many cars are seen 
+                            int8 rowIndexer1;
+                            int8 rowIndexer2;
+                            int8 rowIndexer3;
+                            int8 rowIndexer4;
+
+                            logical front_seen;
+                            front_seen = 0;
+                            logical back_seen;
+                            back_seen = 0;
+                            logical front_first;
+                            front_first = 0;
+
+
+                            %this is for finding the ones in front
+                            for rowIndexer1 = 1:Lane_Count{i}
+
+                                thetaThis = carInfo{places{i,rowIndexer1},3};
+                                distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                if (abs(distance_in_front)<theta_view)
+                                    if (distance_in_front~=0)
+                                        if(distance_in_front>0)
+                                            front_seen = 1;
+                                            back_seen = 0;
+                                            front_first = 1;
+
+                                            %for finding the one that is not in front
+                                            for rowIndexer2 = rowIndexer1+1:Lane_Count{i}
+                                                thetaThis = carInfo{places{i,rowIndexer1},3};
+                                                distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                                if (~(distance_in_front > 0));break;end
+                                                %if front_seen = 0 then ~(distance_in_front < 0)
+                                            end
+                                            break;
+                                        else
+                                            front_seen = 0;
+                                            back_seen = 1;
+
+                                            for rowIndexer2 = rowIndexer1+1:Lane_Count{i}
+                                                thetaThis = carInfo{places{i,rowIndexer2},3};
+                                                distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                                if (~(distance_in_front < 0));break;end
+                                                %if front_seen = 0 then ~(distance_in_front < 0)
+                                            end
+                                            break;
+                                        end
+                                    end
+                                end
+                            end
+
+                            if (front_seen + back_seen ~= 0)
+                                     %this is for finding the other set that is the
+                                     %opposite of the ones previously found(if the
+                                     %rowIndexers 1 and 2 are used to find cars in
+                                     %front, then this is to find cars behind, vice
+                                     %versa)
+                                for rowIndexer3 = rowIndexer2:Lane_Count{i}
+                                    thetaThis = carInfo{places{i,rowIndexer3},3};
+                                    distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                    if (abs(distance_in_front) < theta_view && distance_in_front*(-1)^back_seen <0)
+                                        for rowIndexer4 = rowIndexer3:Lane_Count{i}
+                                            thetaThis = carInfo{places{i,rowIndexer4},3};
+                                            distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                            if (abs(distance_in_front) > theta_view)
+                                                back_seen = 1;
+                                                front_seen = 1;
+                                                break;
+                                            end
+                                        end
+                                        break;
+                                    end
+                                end
+
+                                rowIndexer2 = rowIndexer2-1;
+                                rowIndexer4 = rowIndexer4-1;
+
+                                if (front_seen + back_seen > 1)
+                                    %problematic maybe
+                                    piece1 = places(i,rowIndexer1:rowIndexer2);
+                                    piece1 = flip(piece1,2);
+
+                                    piece2 = places(i,rowIndexer3:rowIndexer4);
+                                    piece = [piece1,piece2];
+
+                                    front = piece{mod(front_first+1,2)+1};
+                                    back = piece{mod(front_first,2)+1};
+
+                                    fr(i,1:rowIndexer2-rowIndexer1) = front;
+                                    ba(i,1:rowIndexer4-rowIndexer3) = back;
+
+                                else
+                                    if (front_seen ~= 0)
+                                        piece1 = places(i,rowIndexer1:rowIndexer2);
+                                        fr(i,1:rowIndexer2-rowIndexer1) = flip(piece1,2);
+                                    end
+
+                                    if (back_seen ~=0)
+                                        ba(i,1:rowIndexer2-rowIndexer1) = places(i,rowIndexer1:rowIndexer2);
+
+                                    end
+                                end
+                            end
+                        end
+                    else
+                        for i = 1:sz(1)
+                            %is row empty
+                            if (places(i,1)==places(i,2)&&places(i,2)==places(i,3)&&places(i,3)==places(i,4)&&places(i,4)==places(i,5)&&places(i,5)==0)
+                                continue;
+                            end
+
+                            %find how many cars are seen 
+                            int8 rowIndexer1;
+                            int8 rowIndexer2;
+                            int8 rowIndexer3;
+                            int8 rowIndexer4;
+
+                            int8 rowIndexer5;
+                            int8 crit_Index; %in the critical case where
+                            %case 1: car "peeking" is within 0+-theta_view then there
+                            %is a possibility where it can see cars at the
+                            %front of the track's placing as being behind it(if the "peeking car" theta is
+                            %less than (theta_view-pi)
+                            %case 2: see cars at the back of the track's placing as
+                            %being in front of it(if the "peeking car" theta is
+                            %greater than (pi - theta_view)
+
+                            if (theta_from_pi>0)%how far is pi in front of objtheta - case 2
+                                crit_Index = Lane_Count{i};
+                                %crit_Index: index of car that cannot be seen.
+                                %In this context, rowIndexer5 searches for a car that is behind
+                                %objTheta at the front of the places.
+                                imp_object_in_back = theta2nDisp(objTheta,carInfo{places{i,crit_Index},3});
+                                if (abs(imp_object_in_back)<theta_view)
+                                    for rowIndexer5 = 1:Lane_Count{i}
+                                        thetaThis = carInfo{places{i,rowIndexer5},3};
+                                        distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                        if(distance_in_front>theta_view) 
+                                            crit_Index = rowIndexer5;
+                                            break;
+                                        end
+                                    end
+                                end
+
+
+
+                                logical front_seen;
+                                front_seen = 0;
+                                logical back_seen;
+                                back_seen = 0;
+                                logical front_first;
+                                front_first = 0;
+
+
+                                %this is for finding the ones in front
+                                for rowIndexer1 = 1:crit_Index
+
+                                    thetaThis = carInfo{places{i,rowIndexer1},3};
+                                    distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                    if (abs(distance_in_front)<theta_view)
+                                        if (distance_in_front~=0)
+                                            if(distance_in_front>0)
+                                                front_seen = 1;
+                                                back_seen = 0;
+                                                front_first = 1;
+
+                                                %for finding the one that is not in front
+                                                for rowIndexer2 = rowIndexer1+1:crit_Index
+                                                    thetaThis = carInfo{places{i,rowIndexer2},3};
+                                                    distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                                    if (~(distance_in_front > 0));break;end
+                                                    %if front_seen = 0 then ~(distance_in_front < 0)
+                                                end
+                                                viewed = viewed + rowIndexer2 - rowIndexer1;
+                                                break;
+                                            else
+                                                front_seen = 0;
+                                                back_seen = 1;
+
+                                                for rowIndexer2 = rowIndexer1+1:crit_Index
+                                                    thetaThis = carInfo{places{i,rowIndexer2},3};
+                                                    distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                                    if (~(distance_in_front < 0));break;end
+                                                    %if front_seen = 0 then ~(distance_in_front < 0)
+                                                end
+                                                break;
+                                            end
+                                        end
+                                    end
+                                end
+
+                                if (front_seen + back_seen ~= 0)
+                                         %this is for finding the ones behind
+                                    for rowIndexer3 = rowIndexer2:crit_Index
+                                        thetaThis = carInfo{places{i,rowIndexer3},3};
+                                        distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                        if (abs(distance_in_front) < theta_view && distance_in_front*(-1)^back_seen <0)
+                                            for rowIndexer4 = rowIndexer3:crit_Index
+                                                thetaThis = carInfo{places{i,rowIndexer4},3};
+                                                distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                                if (abs(distance_in_front) > theta_view)
+                                                    back_seen = 1;
+                                                    front_seen = 1;
+                                                    break;
+                                                end
+                                            end
+                                            break;
+                                        end
+                                    end
+
+                                    rowIndexer2 = rowIndexer2-1;
+                                    rowIndexer4 = rowIndexer4-1;
+                                    rowIndexer5 = rowIndexer5+1;
+
+                                    if (front_seen + back_seen > 1)
+                                        %problematic maybe
+                                        piece1 = places(i,rowIndexer1:rowIndexer2);
+                                        piece1 = flip(piece1,2);
+
+                                        piece2 = places(i,rowIndexer3:rowIndexer4);
+                                        piece = [piece1,piece2];
+
+                                        front = piece{mod(front_first+1,2)+1};
+                                        back = piece{mod(front_first,2)+1};
+
+                                        if (crit_Index ~= Lane_Count{i})
+                                            fr(i,1:crit_space)= places(i,rowIndexer5:Lane_Count{i});
+                                            crit_space = Lane_Count{i}-crit_Index;
+                                            fr(i,crit_space+1:rowIndexer2-rowIndexer1+1+crit_space) = front;
+                                        else
+                                            fr(i,1:rowIndexer2-rowIndexer1+1) = front;
+                                        end
+                                        ba(i,1:rowIndexer4-rowIndexer3+1) = back;
+
+                                    else
+                                        if (front_seen ~= 0) 
+                                            front = places(i,rowIndexer1:rowIndexer2);
+
+                                            if (crit_Index ~= Lane_Count{i})
+                                                crit_space = Lane_Count{i}-crit_Index;
+                                                fr(i,1:crit_space)= places(i,rowIndexer5:Lane_Count{i});
+                                                fr(i,crit_space+1:rowIndexer2-rowIndexer1+1+crit_space) = flip(front,2);
+                                            else
+                                                fr(i,1:rowIndexer2-rowIndexer1+1) = flip(front,2);
+                                            end
+                                        end
+
+                                        if (back_seen ~=0)
+                                            ba(i,1:rowIndexer2-rowIndexer1+1) = places(i,rowIndexer1:rowIndexer2);
+
+                                        end
+                                    end
+                                end
+                            else %case 1 - the case where theta_from_pi < 0 so it is in front of pi
+
+                                crit_Index = 1;
+                                imp_object_in_front = theta2nDisp(objTheta,carInfo{places{i,crit_Index},3});
+                                if (abs(imp_object_in_front)<theta_view)
+                                    for rowIndexer5 = 1:Lane_Count{i}
+                                        thetaThis = carInfo{places{i,rowIndexer5},3};
+                                        distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                        if(distance_in_front< -1*theta_view) 
+                                            crit_Index = rowIndexer5;
+                                            break;
+                                        end
+                                    end
+                                end
+
+
+
+                                logical front_seen;
+                                front_seen = 0;
+                                logical back_seen;
+                                back_seen = 0;
+                                logical front_first;
+                                front_first = 0;
+
+
+                                %this is for finding the ones in front
+                                %
+                                for rowIndexer1 = crit_Index:Lane_Count{i}
+
+                                    thetaThis = carInfo{places{i,rowIndexer1},3};
+                                    distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                    if (abs(distance_in_front)<theta_view)
+                                        if (distance_in_front~=0)
+                                            if(distance_in_front>0)
+                                                front_seen = 1;
+                                                back_seen = 0;
+                                                front_first = 1;
+
+                                                %for finding the one that is not in front
+                                                for rowIndexer2 = rowIndexer1+1:Lane_Count{i}
+                                                    thetaThis = carInfo{places{i,rowIndexer1},3};
+                                                    distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                                    if (~(distance_in_front > 0));break;end
+                                                    %if front_seen = 0 then ~(distance_in_front < 0)
+                                                end
+                                                viewed = viewed + rowIndexer2 - rowIndexer1;
+                                                break;
+                                            else
+                                                front_seen = 0;
+                                                back_seen = 1;
+
+                                                for rowIndexer2 = rowIndexer1+1:Lane_Count{i}
+                                                    thetaThis = carInfo{places{i,rowIndexer1},3};
+                                                    distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                                    if (~(distance_in_front < 0));break;end
+                                                    %if front_seen = 0 then ~(distance_in_front < 0)
+                                                end
+                                                break;
+                                            end
+                                        end
+                                    end
+                                end
+
+                                if (front_seen + back_seen ~= 0)
+                                         %this is for finding the ones behind
+                                    for rowIndexer3 = rowIndexer2:Lane_Count{i}
+                                        thetaThis = carInfo{places{i,rowIndexer3},3};
+                                        distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                        if (abs(distance_in_front) < theta_view && distance_in_front*(-1)^back_seen <0)
+                                            for rowIndexer4 = rowIndexer3:Lane_Count{i}
+                                                thetaThis = carInfo{places{i,rowIndexer4},3};
+                                                distance_in_front = theta2nDisp(objTheta,thetaThis);
+                                                if (abs(distance_in_front) > theta_view);
+                                                    back_seen = 1;
+                                                    front_seen = 1;
+                                                    break;
+                                                end
+                                            end
+                                            break;
+                                        end
+                                    end
+
+                                    rowIndexer2 = rowIndexer2-1;
+                                    rowIndexer4 = rowIndexer4-1;
+                                    rowIndexer5 = rowIndexer5-1;
+
+                                    if (front_seen + back_seen > 1)
+                                        %problematic maybe
+                                        piece1 = places(i,rowIndexer1:rowIndexer2);
+                                        piece1 = flip(piece1,2);
+
+                                        piece2 = places(i,rowIndexer3:rowIndexer4);
+                                        piece = [piece1,piece2];
+
+                                        front = piece{mod(front_first+1,2)+1};
+                                        back = piece{mod(front_first,2)+1};
+
+                                        if (crit_Index ~= 1)
+                                            ba(i,1:rowIndexer5)= places(i,1:rowIndexer5);
+                                            ba(i,rowIndexer5+1:rowIndexer2-rowIndexer1) = back;
+                                        else
+                                            ba(i,1:rowIndexer4-rowIndexer3+1) = back;
+                                        end
+                                        fr(i,1:rowIndexer2-rowIndexer1+1) = front;
+
+                                    else
+                                        if (front_seen ~= 0)
+                                            piece1 = places(i,rowIndexer1:rowIndexer2);
+                                            fr(i,1:rowIndexer2-rowIndexer1) = flip(piece1,2);
+                                        end
+
+                                        if (back_seen ~=0)
+                                            back = places(i,rowIndexer1:rowIndexer2);
+
+                                            if (crit_Index ~= 1)
+                                                ba(i,1:rowIndexer2-rowIndexer1+1) = back;
+                                                ba(i,1+(rowIndexer2-rowIndexer1+1):rowIndexer5+(rowIndexer2-rowIndexer1+1)) =  ...
+                                                    places(i,1:rowIndexer5);
+                                            else
+                                                ba(i,1:rowIndexer2-rowIndexer1+1) = back;
+                                            end
+                                        end
+                                    end
+                                end      
+                            end
+                        end                         
+                    end
+                end
+            end
+        end
+    end
+end

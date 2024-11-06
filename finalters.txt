@@ -1,0 +1,126 @@
+import numpy as np
+
+def theta2nDisp(obj_theta, theta):
+    # Placeholder for actual implementation
+    pass
+
+def quicksort1(array, car_info, obj_theta):
+    # Placeholder for quicksort based on car_info and obj_theta
+    pass
+
+def quicksort2(array, car_info, obj_theta):
+    # Placeholder for quicksort based on car_info and obj_theta
+    pass
+
+def peek2(car_info, places, which, obj_theta, lane_count, objN, theta_view):
+    sz = places.shape
+    fr, ba = None, None
+
+    if which < 3:
+        if which == 1:
+            # Front reference case
+            fr_lists = [np.zeros(objN // 2) for _ in range(5)]
+            fr_non_zero_counts = [0] * 5
+            
+            for i in range(sz[0]):
+                if np.all(places[i, :] == 0):
+                    continue
+                row_indexer = 0
+                for j in range(sz[1]):
+                    stored = places[i, j]
+                    if stored == 0 or car_info[stored, 1] == 0:
+                        continue
+                    theta_this = car_info[stored, 2]
+                    if 0 < theta2nDisp(obj_theta, theta_this) < np.pi / 16:
+                        fr_lists[i][row_indexer] = stored
+                        fr_non_zero_counts[i] += 1
+                        row_indexer += 1
+
+                # Sorting and zero padding
+                for i, count in enumerate(fr_non_zero_counts):
+                    if count == 0:
+                        fr_lists[i] = np.zeros(objN // 2)
+                    else:
+                        fr_lists[i] = np.concatenate([quicksort1(fr_lists[i][:count], car_info, obj_theta), 
+                                                      np.zeros(objN // 2 - count)])
+
+            fr = np.vstack(fr_lists)
+            ba = np.zeros((5, objN // 2))
+
+        else:
+            # Back reference case
+            ba_lists = [np.zeros(objN // 2) for _ in range(5)]
+            ba_non_zero_counts = [0] * 5
+
+            for i in range(sz[0]):
+                if np.all(places[i, :] == 0):
+                    continue
+                row_indexer = 0
+                for j in range(sz[1]):
+                    stored = places[i, j]
+                    if stored == 0 or car_info[stored, 1] == 0:
+                        continue
+                    theta_this = car_info[stored, 2]
+                    if -np.pi / 16 < theta2nDisp(obj_theta, theta_this) < 0:
+                        ba_lists[i][row_indexer] = stored
+                        ba_non_zero_counts[i] += 1
+                        row_indexer += 1
+
+                # Sorting and zero padding
+                for i, count in enumerate(ba_non_zero_counts):
+                    if count == 0:
+                        ba_lists[i] = np.zeros(objN // 2)
+                    else:
+                        ba_lists[i] = np.concatenate([quicksort1(ba_lists[i][:count][::-1], car_info, obj_theta), 
+                                                      np.zeros(objN // 2 - count)])
+
+            ba = np.vstack(ba_lists)
+            fr = np.zeros((5, objN // 2))
+
+    elif which > 5:
+        # Complex cases (which == 6, 7, or 8)
+        fr, ba = np.zeros(sz), np.zeros(sz)
+        indexer_fr, indexer_ba = np.ones(5, dtype=int), np.ones(5, dtype=int)
+        car_seen_fr, car_seen_ba = np.zeros(5, dtype=int), np.zeros(5, dtype=int)
+
+        for j in range(objN):
+            if car_info[j, 1] == 0:
+                continue
+            theta_this = car_info[j, 2]
+            lane_this = car_info[j, 1]
+            if abs(theta2nDisp(obj_theta, theta_this)) < theta_view:
+                if theta2nDisp(obj_theta, theta_this) > 0:
+                    car_seen_fr[lane_this - 1] += 1
+                    fr[lane_this - 1, indexer_fr[lane_this - 1] - 1] = car_info[j, 0]
+                    indexer_fr[lane_this - 1] += 1
+                else:
+                    car_seen_ba[lane_this - 1] += 1
+                    ba[lane_this - 1, indexer_ba[lane_this - 1] - 1] = car_info[j, 0]
+                    indexer_ba[lane_this - 1] += 1
+
+        for i in range(sz[0]):
+            if car_seen_fr[i] > 0:
+                fr[i, :car_seen_fr[i]] = quicksort2(fr[i, :car_seen_fr[i]], car_info, obj_theta)
+            if car_seen_ba[i] > 0:
+                ba[i, :car_seen_ba[i]] = quicksort1(ba[i, :car_seen_ba[i]], car_info, obj_theta)
+
+    else:
+        # Cases 3, 4, and 5 (theta and lane-based peeking with crit indexing)
+        fr, ba = np.zeros((5, objN // 2)), np.zeros((5, objN // 2))
+        if which == 5:
+            # Process based on angle constraints and critical indexing for which == 5
+            theta_from_pi = theta2nDisp(obj_theta, np.pi)
+            if abs(theta_from_pi) > theta_view or theta_from_pi < 0:
+                # Add processing logic for front and critical indexing as per MATLAB code for which == 5
+                pass
+            else:
+                # Alternate processing based on different angle limits and positions
+                pass
+        elif which == 4:
+            # Process specifically for back references in which == 4
+            pass
+        elif which == 3:
+            # Process for combined front and back references for which == 3
+            pass
+
+    return fr, ba
