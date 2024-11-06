@@ -235,7 +235,7 @@ def peek2(car_info, places, which, obj_theta, lane_count, objN, theta_view):
                         fr_non_zero_counts[i] += 1
                         row_indexer += 1
 
-                # Sorting and zero padding
+            # Sorting and zero padding
                 for i, count in enumerate(fr_non_zero_counts):
                     if count == 0:
                         fr_lists[i] = np.zeros(objN // 2)
@@ -302,24 +302,127 @@ def peek2(car_info, places, which, obj_theta, lane_count, objN, theta_view):
                 fr[i, :car_seen_fr[i]] = quicksort2(fr[i, :car_seen_fr[i]], car_info, obj_theta)
             if car_seen_ba[i] > 0:
                 ba[i, :car_seen_ba[i]] = quicksort1(ba[i, :car_seen_ba[i]], car_info, obj_theta)
-
     else:
-        # Cases 3, 4, and 5 (theta and lane-based peeking with crit indexing)
-        fr, ba = np.zeros((5, objN // 2)), np.zeros((5, objN // 2))
-        if which == 5:
-            # Process based on angle constraints and critical indexing for which == 5
-            theta_from_pi = theta2nDisp(obj_theta, np.pi)
+        if  which == 5:
+            #which == 5
             if abs(theta_from_pi) > theta_view or theta_from_pi < 0:
-                # Add processing logic for front and critical indexing as per MATLAB code for which == 5
-                pass
+                for i in range(sz[0]):
+                    # Skip empty rows
+                    if np.all(places[i, :] == 0):
+                        continue
+
+                    front_seen = False
+                    for row_indexer1 in range(int(lane_count[i])):
+                        theta_this = car_info[places[i, row_indexer1] - 1, 2]  # Adjust for zero-based index
+                        distance_in_front = theta2n_disp(obj_theta, theta_this)
+
+                        if abs(distance_in_front) < theta_view:
+                            if distance_in_front > 0:
+                                front_seen = True
+                                for row_indexer2 in range(row_indexer1 + 1, int(lane_count[i])):
+                                    theta_this = car_info[places[i, row_indexer2] - 1, 2]
+                                    distance_in_front = theta2n_disp(obj_theta, theta_this)
+                                    if distance_in_front <= 0:
+                                        break
+                                row_indexer2 -= 1
+
+                                if front_seen:
+                                    fr[i, :row_indexer2 - row_indexer1 + 1] = np.flip(
+                                        places[i, row_indexer1:row_indexer2 + 1])
+
             else:
-                # Alternate processing based on different angle limits and positions
-                pass
+                for i in range(sz[0]):
+                    if np.all(places[i, :] == 0):
+                        continue
+
+                    front_seen = False
+                    crit_index = int(lane_count[i])
+                    imp_object_in_back = theta2n_disp(obj_theta, car_info[places[i, crit_index - 1] - 1, 2])
+
+                    if abs(imp_object_in_back) < theta_view:
+                        for row_indexer5 in range(int(lane_count[i])):
+                            theta_this = car_info[places[i, row_indexer5] - 1, 2]
+                            distance_in_front = theta2n_disp(obj_theta, theta_this)
+                            if distance_in_front > theta_view:
+                                crit_index = row_indexer5
+                                break
+
+                    for row_indexer1 in range(crit_index):
+                        theta_this = car_info[places[i, row_indexer1] - 1, 2]
+                        distance_in_front = theta2n_disp(obj_theta, theta_this)
+
+                        if abs(distance_in_front) < theta_view and distance_in_front > 0:
+                            front_seen = True
+                            for row_indexer2 in range(row_indexer1 + 1, crit_index):
+                                theta_this = car_info[places[i, row_indexer2] - 1, 2]
+                                distance_in_front = theta2n_disp(obj_theta, theta_this)
+                                if distance_in_front <= 0:
+                                    break
+                            row_indexer2 -= 1
+                            row_indexer5 += 1
+
+                            if front_seen:
+                                front = places[i, row_indexer1:row_indexer2 + 1]
+                                crit_space = int(lane_count[i]) - crit_index
+                                fr[i, :crit_space] = places[i, row_indexer5:lane_count[i]]
+                                fr[i, crit_space:crit_space + row_indexer2 - row_indexer1 + 1] = np.flip(front)
+
         elif which == 4:
-            # Process specifically for back references in which == 4
-            pass
-        elif which == 3:
-            # Process for combined front and back references for which == 3
-            pass
+            if abs(theta_from_pi) > theta_view:
+                for i in range(sz[0]):
+                    if np.all(places[i, :] == 0):
+                        continue
+
+                    back_seen = False
+                    for row_indexer1 in range(int(lane_count[i])):
+                        theta_this = car_info[places[i, row_indexer1] - 1, 2]
+                        distance_in_front = theta2n_disp(obj_theta, theta_this)
+
+                        if -theta_view < distance_in_front < 0:
+                            back_seen = True
+                            for row_indexer2 in range(row_indexer1 + 1, int(lane_count[i])):
+                                theta_this = car_info[places[i, row_indexer2] - 1, 2]
+                                distance_in_front = theta2n_disp(obj_theta, theta_this)
+                                if distance_in_front >= 0:
+                                    break
+                            row_indexer2 -= 1
+
+                            if back_seen:
+                                ba[i, :row_indexer2 - row_indexer1 + 1] = places[i, row_indexer1:row_indexer2 + 1]
+
+        else: #which == 3
+            if abs(theta_from_pi) > theta_view:
+                for i in range(sz[0]):
+                    if np.all(places[i, :] == 0):
+                        continue
+
+                    front_seen = back_seen = False
+                    front_first = False
+
+                    for row_indexer1 in range(int(lane_count[i])):
+                        theta_this = car_info[places[i, row_indexer1] - 1, 2]
+                        distance_in_front = theta2n_disp(obj_theta, theta_this)
+
+                        if abs(distance_in_front) < theta_view and distance_in_front != 0:
+                            if distance_in_front > 0:
+                                front_seen = True
+                                front_first = True
+                                for row_indexer2 in range(row_indexer1 + 1, int(lane_count[i])):
+                                    theta_this = car_info[places[i, row_indexer2] - 1, 2]
+                                    distance_in_front = theta2n_disp(obj_theta, theta_this)
+                                    if distance_in_front <= 0:
+                                        break
+                            else:
+                                back_seen = True
+                                for row_indexer2 in range(row_indexer1 + 1, int(lane_count[i])):
+                                    theta_this = car_info[places[i, row_indexer2] - 1, 2]
+                                    distance_in_front = theta2n_disp(obj_theta, theta_this)
+                                    if distance_in_front >= 0:
+                                        break
+                            row_indexer2 -= 1
+
+                            if front_seen + back_seen > 1:
+                                piece1 = np.flip(places[i, row_indexer1:row_indexer2 + 1])
+                                fr[i, :len(piece1)] = piece1 if front_first else ba[i, :len(piece1)]
 
     return fr, ba
