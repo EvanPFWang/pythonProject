@@ -17,6 +17,143 @@ class Car:
         self.status = status
         self.ref = None  # cars in frame of reference (customizable based on context)
 
+    import numpy as np
+
+    def drive(car_info, fr, vmax, objlane, obj_theta):
+        objL = 2 * np.pi * np.array([1000 / (2 * np.pi) + i for i in range(5)])  # Length of road
+        objdt = 1e-2
+
+        if not fr[objlane, 0]:  # Equivalent to `~fr(objlane,1)` in MATLAB
+            car_in_front_pre_drive = fr[objlane, 0]
+            car_in_front_post_drive = car_info.shape[0] + 1
+            new_vv = (np.e - 2) / objL[objlane] * 2 * np.pi * 2
+            decision = 0
+            return car_in_front_pre_drive, car_in_front_post_drive, new_vv, objlane, decision
+
+        theta2n = np.zeros(3)
+
+        if 1 < objlane < 5:
+            lane_type = 1
+            theta_max = vmax * np.array([(1e-2) / objL[objlane - 1] * 2 * np.pi * (1 / np.sqrt(2)),
+                                         (1e-2) / objL[objlane] * 2 * np.pi * 2,
+                                         (1e-2) / objL[objlane + 1] * 2 * np.pi * (1 / np.sqrt(2))])
+
+            if fr[objlane - 1, 0] != 0:
+                left_next = conv_to_theta(car_info[fr[objlane - 1, 0] - 1, 3], objL[objlane - 1])
+                theta2n[0] = theta2n_disp(obj_theta, car_info[fr[objlane - 1, 0] - 1, 2])
+            else:
+                left_next = conv_to_theta(vmax, objL[objlane - 1])
+                theta2n[0] = theta_max[0]
+
+            if fr[objlane + 1, 0] != 0:
+                right_next = conv_to_theta(car_info[fr[objlane + 1, 0] - 1, 3], objL[objlane + 1])
+                theta2n[2] = theta2n_disp(obj_theta, car_info[fr[objlane + 1, 0] - 1, 2])
+            else:
+                right_next = conv_to_theta(vmax, objL[objlane + 1])
+                theta2n[2] = theta_max[2]
+
+            if fr[objlane, 0] != 0:
+                front_next = conv_to_theta(car_info[fr[objlane, 0] - 1, 3], objL[objlane])
+                theta2n[1] = theta2n_disp(obj_theta, car_info[fr[objlane, 0] - 1, 2])
+            else:
+                front_next = conv_to_theta(vmax, objL[objlane])
+                theta2n[1] = theta_max[1]
+
+            theta_min = [left_next * objdt / np.sqrt(2), front_next * objdt, right_next * objdt / np.sqrt(2)]
+
+        elif objlane == 1:
+            lane_type = 2
+            theta_max = vmax * np.array([(1e-2) / objL[objlane - 1] * 2 * np.pi * (1 / np.sqrt(2)),
+                                         (1e-2) / objL[objlane] * 2 * np.pi * 2,
+                                         (1e-2) / objL[objlane + 1] * 2 * np.pi * (1 / np.sqrt(2))])
+
+            if fr[objlane + 1, 0] != 0:
+                right_next = conv_to_theta(car_info[fr[objlane + 1, 0] - 1, 3], objL[objlane + 1])
+                theta2n[2] = theta2n_disp(obj_theta, car_info[fr[objlane + 1, 0] - 1, 2])
+            else:
+                right_next = conv_to_theta(vmax, objL[objlane + 1])
+                theta2n[2] = theta_max[2]
+
+            if fr[objlane, 0] != 0:
+                front_next = conv_to_theta(car_info[fr[objlane, 0] - 1, 3], objL[objlane])
+                theta2n[1] = theta2n_disp(obj_theta, car_info[fr[objlane, 0] - 1, 2])
+            else:
+                front_next = conv_to_theta(vmax, objL[objlane])
+                theta2n[1] = theta_max[1]
+
+            theta_min = [0, front_next * objdt, right_next * objdt / np.sqrt(2)]
+
+        elif objlane == 5:
+            lane_type = 3
+            theta_max = vmax * np.array([(1e-2) / objL[objlane - 1] * 2 * np.pi * (1 / np.sqrt(2)),
+                                         (1e-2) / objL[objlane] * 2 * np.pi * 2,
+                                         (1e-2) / objL[objlane + 1] * 2 * np.pi * (1 / np.sqrt(2))])
+
+            if fr[objlane - 1, 0] != 0:
+                left_next = conv_to_theta(car_info[fr[objlane - 1, 0] - 1, 3], objL[objlane - 1])
+                theta2n[0] = theta2n_disp(obj_theta, car_info[fr[objlane - 1, 0] - 1, 2])
+            else:
+                left_next = conv_to_theta(vmax, objL[objlane - 1])
+                theta2n[0] = theta_max[0]
+
+            if fr[objlane, 0] != 0:
+                front_next = conv_to_theta(car_info[fr[objlane, 0] - 1, 3], objL[objlane])
+                theta2n[1] = theta2n_disp(obj_theta, car_info[fr[objlane, 0] - 1, 2])
+            else:
+                front_next = conv_to_theta(vmax, objL[objlane])
+                theta2n[1] = theta_max[1]
+
+            theta_min = [left_next * objdt / np.sqrt(2), front_next * objdt, front_next * objdt]
+
+        else:
+            return None
+
+        if lane_type == 1:
+            left_speed = speed(left_next, vmax, theta2n[0], theta_min[0], theta_max[0])
+            front_speed = speed(front_next, vmax, theta2n[1], theta_min[1], theta_max[1])
+            right_speed = speed(right_next, vmax, theta2n[2], theta_min[2], theta_max[2])
+
+            speeds = [left_speed, front_speed, right_speed]
+            M = max(speeds)
+            I = speeds.index(M)
+
+            car_in_front_pre_drive = fr[objlane, 0]
+            decision = I - 1
+            car_in_front_post_drive = fr[objlane + decision, 0]
+            new_vv = M
+
+        elif lane_type == 2:
+            front_speed = speed(front_next, vmax, theta2n[1], theta_min[1], theta_max[1])
+            right_speed = speed(right_next, vmax, theta2n[2], theta_min[2], theta_max[2])
+
+            if front_speed < right_speed:
+                car_in_front_pre_drive = fr[objlane, 0]
+                new_vv = right_speed
+                decision = 1
+                car_in_front_post_drive = fr[objlane + decision, 0]
+            else:
+                car_in_front_pre_drive = fr[objlane, 0]
+                new_vv = front_speed
+                decision = 0
+                car_in_front_post_drive = fr[objlane + decision, 0]
+
+        elif lane_type == 3:
+            left_speed = speed(left_next, vmax, theta2n[0], theta_min[0], theta_max[0])
+            front_speed = speed(front_next, vmax, theta2n[1], theta_min[1], theta_max[1])
+
+            if front_speed < left_speed:
+                car_in_front_pre_drive = fr[objlane, 0]
+                new_vv = left_speed
+                decision = -1
+                car_in_front_post_drive = fr[objlane + decision, 0]
+            else:
+                car_in_front_pre_drive = fr[objlane, 0]
+                new_vv = front_speed
+                decision = 0
+                car_in_front_post_drive = fr[objlane + decision, 0]
+
+        return car_in_front_pre_drive, car_in_front_post_drive, new_vv, objlane, decision
+
     def execute1(self, car_info, places, lane_count):
         # Perform pre-drive decision-making
         vmax = 70
@@ -67,6 +204,14 @@ class Car:
             self.theta -= 2 * np.pi  # Wrap around to simulate circular track
     def info(self):
         return self.id, self.lane, self.theta, self.velocity, self.status
+"""car_in_front2(next_car_pre_ex, next_car_post_ex, newplaces, car_info, fr2, car_id, obj_theta, old_lane,
+                      post_execution)
+                      
+                      
+                      
+                      
+                      """
+
 
     @staticmethod
     def car_in_front2(next_car_pre_ex, next_car_post_ex, newplaces, car_info, fr2, car_id, obj_theta, old_lane,
@@ -148,14 +293,6 @@ class Car:
     def conv_to_theta(pre_conv, lane_length):
         return pre_conv / lane_length * 2 * np.pi
 
-
-
-import numpy as np
-
-# Assuming theta2n_disp is already defined as:
-# def theta2n_disp(obj_theta, al_theta):
-#     theta_dist = (al_theta - 2 * np.pi * (al_theta > np.pi)) - (obj_theta - 2 * np.pi * (obj_theta > np.pi))
-#     return theta_dist
 
 def quicksort1(vector, car_info, obj_theta):
     """
