@@ -2,17 +2,19 @@ import numpy as np
 
 class Car:
     # Class Constants
-    r = [1000 / (2 * np.pi), 1000 / (2 * np.pi) + 1, 1000 / (2 * np.pi) + 2,
-         1000 / (2 * np.pi) + 3, 1000 / (2 * np.pi) + 4]
+    rMin    = 1000 / (2 * np.pi)
+    r = [rMin, rMin + 1, rMin + 2, rMin + 3, rMin + 4]
     dt = 1e-2
 
-    def __init__(self, identity, lane, theta, vel, n):
+    def __init__(self, identity, lane, theta, vel, maxVel, status):
         self.id = identity
         self.lane = lane
+        self.radius = radii[lane - 1]  # Assign radius based on lane
         self.theta = theta
         self.thetaT = 0
         self.vel = vel
-        self.N = n
+        self.max_vel = n
+        self.status = status
         self.ref = None  # cars in frame of reference (customizable based on context)
 
     def execute1(self, car_info, places, lane_count):
@@ -58,13 +60,18 @@ class Car:
                                         fr2, car_id, changes[2], old_lane, lane_count)
         return car1, car2 if car1 != 0 else (0, 0)
 
+    def update_position(self, dt):
+        # Update theta based on current velocity
+        self.theta += self.velocity * dt / self.radius  # Account for radius in theta change
+        if self.theta >= 2 * np.pi:
+            self.theta -= 2 * np.pi  # Wrap around to simulate circular track
     def info(self):
         return self.id, self.lane, self.theta, self.velocity, self.status
 
     @staticmethod
     def car_in_front2(next_car_pre_ex, next_car_post_ex, newplaces, car_info, fr2, car_id, obj_theta, old_lane,
                       post_execution):
-        L = 2 * np.pi * np.array([1000 / (2 * np.pi) + i for i in range(5)])
+        L = 2 * np.pi * np.array([rMin + i for i in range(5)])
         crash_theta = 2 * np.pi * np.array([2, 2, 2, 2, 2]) / L
         lgc = int(1 * car_info[next_car_pre_ex, 5] + 3 * car_info[next_car_post_ex, 5] + 8 * car_info[car_id, 5])
 
@@ -143,14 +150,65 @@ class Car:
 
 
 
-def quicksort1(array, car_info, obj_theta):
-    # Placeholder for quicksort based on car_info and obj_theta
-    pass
+import numpy as np
 
+# Assuming theta2n_disp is already defined as:
+# def theta2n_disp(obj_theta, al_theta):
+#     theta_dist = (al_theta - 2 * np.pi * (al_theta > np.pi)) - (obj_theta - 2 * np.pi * (obj_theta > np.pi))
+#     return theta_dist
 
-def quicksort2(array, car_info, obj_theta):
-    # Placeholder for quicksort based on car_info and obj_theta
-    pass
+def quicksort1(vector, car_info, obj_theta):
+    """
+    descending order
+    """
+    if len(vector) <= 1:
+        return vector
+
+    # Filter out zero elements
+    vector = [v for v in vector if v != 0]
+
+    # If empty after filtering, return as is
+    if not vector:
+        return []
+
+    # Selecting the pivot as the middle element
+    pivot_index = len(vector) // 2
+    pivot = vector[pivot_index]
+
+    # Partitioning the list based on custom comparator
+    left = [v for v in vector if theta2n_disp(obj_theta, car_info[v, 2]) < theta2n_disp(obj_theta, car_info[pivot, 2])]
+    middle = [v for v in vector if theta2n_disp(obj_theta, car_info[v, 2]) == theta2n_disp(obj_theta, car_info[pivot, 2])]
+    right = [v for v in vector if theta2n_disp(obj_theta, car_info[v, 2]) > theta2n_disp(obj_theta, car_info[pivot, 2])]
+
+    # Recursively apply quicksort1 on left and right partitions
+    return quicksort1(right, car_info, obj_theta) + middle + quicksort1(left, car_info, obj_theta)
+
+def quicksort2(vector, car_info, obj_theta):
+    """
+    ascending order
+    """
+    if len(vector) <= 1:
+        return vector
+
+    # Filter out zero elements
+    vector = [v for v in vector if v != 0]
+
+    # If vector is empty after filtering, return as is
+    if not vector:
+        return []
+
+    # Selecting the pivot as the middle element
+    pivot_index = len(vector) // 2
+    pivot = vector[pivot_index]
+
+    # Partitioning the list based on custom comparator
+    left = [v for v in vector if theta2n_disp(obj_theta, car_info[v, 2]) > theta2n_disp(obj_theta, car_info[pivot, 2])]
+    middle = [v for v in vector if theta2n_disp(obj_theta, car_info[v, 2]) == theta2n_disp(obj_theta, car_info[pivot, 2])]
+    right = [v for v in vector if theta2n_disp(obj_theta, car_info[v, 2]) < theta2n_disp(obj_theta, car_info[pivot, 2])]
+
+    # Recursively apply quicksort2 on left and right partitions
+    return quicksort2(left, car_info, obj_theta) + middle + quicksort2(right, car_info, obj_theta)
+
 
 
 def peek2(car_info, places, which, obj_theta, lane_count, objN, theta_view):

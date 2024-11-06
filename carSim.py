@@ -29,27 +29,6 @@ for i in range(N // 2):
     refI2[3, i] = N - i
 
 
-# Car class definition
-class Car:
-    def __init__(self, car_id, lane, theta, velocity, max_velocity, status=0):
-        self.id = car_id
-        self.lane = lane
-        self.radius = radii[lane - 1]  # Assign radius based on lane
-        self.theta = theta
-        self.velocity = velocity
-        self.max_velocity = max_velocity
-        self.status = status  # -1 if crashed, 0 if active
-
-    def update_position(self, dt):
-        # Update theta based on current velocity
-        self.theta += self.velocity * dt / self.radius  # Account for radius in theta change
-        if self.theta >= 2 * np.pi:
-            self.theta -= 2 * np.pi  # Wrap around to simulate circular track
-
-    def info(self):
-        return self.id, self.lane, self.theta, self.velocity, self.status
-
-
 # Initialize cars with positions based on refI1 and refI2
 cars = []
 for i in range(N // 2):
