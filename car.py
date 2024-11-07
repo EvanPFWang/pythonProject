@@ -159,9 +159,9 @@ class Car:
         vmax = 70
         obj_theta = self.theta
         fr1, _ = self.peek2(car_info, places, 1, obj_theta, lane_count)
-        next_car_pre_drive, next_car_post_drive, newv, objl, decision = self.drive(car_info, fr1, vmax, self.lane,
+        next_car_pre_drive, next_car_post_drive, newv, newl, decision = self.drive(car_info, fr1, vmax, self.lane,
                                                                                    obj_theta)
-        return next_car_pre_drive, next_car_post_drive, newv, objl, decision
+        return next_car_pre_drive, next_car_post_drive, newv, newl, decision
 
     def execute2(self, car_id, car_info, execute1, lane_count):
         # Perform post-decision changes
@@ -178,6 +178,7 @@ class Car:
         self.vel = newv
 
         obj_lane_length = L[new_lane]
+    #FIX THISS
         dtheta = newv * 2 * np.pi * self.dt / obj_lane_length
         self.theta = car_info[car_id, 2] + dtheta - 2 * np.pi * (car_info[car_id, 2] + dtheta > np.pi)
         self.thetaT += dtheta
