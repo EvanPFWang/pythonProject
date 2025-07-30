@@ -69,7 +69,7 @@ class LaneSim:
         self._theta_total = np.zeros(self.N, dtype=np.float32)
         self._idx = np.arange(self.N)
 
-    #public
+#public
     def step(self):
         active = self._lane >= 0
         lane_idx = self._lane[active]
@@ -81,11 +81,11 @@ class LaneSim:
         self._theta_total[active] += dθ
         self._crash_resolution()
         self._post_lane_change_collision(fr)
-        #sync back to dataclass (optional for external use)
+#sync back to dataclass (optional for external use)
         for i, c in enumerate(self.cars):
             c.lane, c.theta, c.vel, c.status = int(self._lane[i]), float(self._theta[i]), float(self._vel[i]), int(self._status[i])
 
-    #peek (nearest only)
+#peek (nearest only)
     def _compute_distance_matrices(self):
         dθ = theta_distance(self._theta[:, None], self._theta[None, :])
         same_lane = self._lane[:, None] == self._lane[None, :]
@@ -111,7 +111,7 @@ class LaneSim:
         idx[np.isinf(dist[np.arange(self.N), idx])] = -1
         return idx.astype(np.int16)
 
-    #drive / decision
+#drive / decision
     def _drive(self, fr):
         θ_max = meters_per_sec_to_theta(np.full(self.N, V_MAX, float), self._lane)
         θ2n = np.zeros(self.N, float)
@@ -133,7 +133,7 @@ class LaneSim:
         self._lane += lane_delta
         np.clip(self._lane, 0, LANES - 1, out=self._lane)
 
-    #crash passes (same as previous)
+#crash passes (same as previous)
     def _crash_resolution(self):
         for lane in range(LANES):
             idx = np.where(self._lane == lane)[0]
@@ -178,19 +178,19 @@ def animate(sim: LaneSim, steps: int = 250, interval: int = 20, save: str = "tra
     interval : int           – delay between frames (ms) in the resulting video
     save : str               – filename for the GIF/MP4 (extension decides)"""
 
-    #figure setup
+#figure setup
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.set_xlim(-(RADII[-1] + 5), RADII[-1] + 5)
     ax.set_ylim(-(RADII[-1] + 5), RADII[-1] + 5)
     ax.set_aspect("equal")
     ax.axis("off")
 
-    #draw lane circles (static background)
+#draw lane circles (static background)
     for r in RADII:
         circle = plt.Circle((0, 0), r, color="lightgray", fill=False, lw=0.5)
         ax.add_patch(circle)
 
-    #scatter for cars
+#scatter for cars
     scat = ax.scatter([], [], s=20, c="tab:blue", edgecolors="k")
 
     def init():
@@ -209,12 +209,12 @@ def animate(sim: LaneSim, steps: int = 250, interval: int = 20, save: str = "tra
     movie = ani.FuncAnimation(fig, update, frames=steps, init_func=init,
                               interval=interval, blit=True)
 
-    #auto‑choose writer based on file extension
+#auto‑choose writer based on file extension
     if save.endswith(".gif"):
         movie.save(save, writer="pillow", fps=1000//interval)
     else:
         movie.save(save, writer="ffmpeg", fps=1000//interval)
-    #plt.close(fig)
+#plt.close(fig)
     return save
 
 def build_default_grid(
@@ -223,9 +223,9 @@ def build_default_grid(
         seed: int | None = None
 ) -> List[Car]:
 
-    rng = np.random.default_rng(seed)  #modern, thread‑safe RNG
+    rng = np.random.default_rng(seed)#modern, thread‑safe RNG
     thetas = np.linspace(-np.pi, np.pi, N, endpoint=False, dtype=np.float32)
-    lanes = np.arange(N) % LANES  #0,1,2,3,4,0,1,…
+    lanes = np.arange(N) % LANES#0,1,2,3,4,0,1,…
     speeds = np.clip(rng.normal(vavg, 0.05 * vavg, N), 0, V_MAX)
 
     return [
@@ -246,7 +246,7 @@ def main():
     """
     cars = build_default_grid(N=40, vavg=50., seed=0)
     sim = LaneSim(cars)
-    animate(sim, steps=6000, interval=16, save="traffic.gif")  #≈60s at 60fps
+    animate(sim, steps=6000, interval=16, save="traffic.gif")#≈60s at 60fps
 
 
 if __name__ == "__main__":
@@ -258,7 +258,7 @@ if __name__ == "__main__":
     ax.set_ylim(-(RADII[-1] + 5), RADII[-1] + 5)
     ax.set_aspect("equal");  ax.axis("off")
 
-    for r in RADII:                       # static lane circles
+    for r in RADII:#static lane circles
         ax.add_patch(plt.Circle((0, 0), r, color="lightgray",
                                 lw=0.5, fill=False))
 
@@ -266,10 +266,10 @@ if __name__ == "__main__":
 
     def init():
         scat.set_offsets(np.empty((0, 2)))
-        return scat,                     # ↩ must return a tuple
+        return scat,#must return a tuple
 
     def update(frame):
-        sim.step()                       # advance the model
+        sim.step()#advance the model
         x = RADII[sim._lane] * np.cos(sim._theta)
         y = RADII[sim._lane] * np.sin(sim._theta)
         scat.set_offsets(np.column_stack([x, y]))
@@ -279,5 +279,5 @@ if __name__ == "__main__":
     anim = ani.FuncAnimation(fig, update, init_func=init,
                              frames=6000, interval=16, blit=True)
 
-    plt.show()                           # preview
+    plt.show()#preview
     anim.save("traffic.gif", writer="pillow", fps=60)
